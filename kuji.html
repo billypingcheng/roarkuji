@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo 一番賞線上抽選平台</title>
+    <title>ROAR 一番賞抽選平台</title>
     
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,8 +13,14 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- Google Fonts: 引入更有氣勢的字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
     <!-- 自定義動畫樣式 -->
     <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .font-brand { font-family: 'Black Ops One', cursive; }
+        
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -32,13 +38,20 @@
             animation: shake 0.5s;
             animation-iteration-count: infinite;
         }
-        .ticket-reveal {
-            transition: all 0.6s ease-out;
-            transform-style: preserve-3d;
+        /* 彩虹呼吸燈效果，呼應 Logo 邊框 */
+        @keyframes rainbow-glow {
+            0%, 100% { box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+            20% { box-shadow: 0 0 10px #ffa500, 0 0 20px #ffa500; }
+            40% { box-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+            60% { box-shadow: 0 0 10px #008000, 0 0 20px #008000; }
+            80% { box-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff; }
+        }
+        .logo-glow {
+            animation: rainbow-glow 4s linear infinite;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white font-sans">
+<body class="bg-gray-950 text-white">
 
     <div id="root"></div>
 
@@ -51,44 +64,44 @@
         
         // 獎品設定
         const INITIAL_PRIZES = [
-            { tier: 'A', name: '超巨大孫悟空模型', total: 2, image: '🔥' },
-            { tier: 'B', name: '達爾戰鬥服版模型', total: 3, image: '👊' },
-            { tier: 'C', name: '神龍大型毛巾', total: 5, image: '🐉' },
-            { tier: 'D', name: '玻璃杯組 (隨機)', total: 10, image: '🍺' },
-            { tier: 'E', name: '簽名色紙', total: 20, image: '📄' },
-            { tier: 'F', name: '橡膠吊飾', total: 40, image: '🔑' },
+            { tier: 'A', name: 'ROAR 限定! 超巨大哥吉拉', total: 2, image: '🦖' },
+            { tier: 'B', name: '機械哥吉拉 覺醒Ver.', total: 3, image: '🤖' },
+            { tier: 'C', name: '摩斯拉 大型毛巾', total: 5, image: '🦋' },
+            { tier: 'D', name: '怪獸檔案 玻璃杯', total: 10, image: '🥛' },
+            { tier: 'E', name: '經典場景 色紙', total: 20, image: '🖼️' },
+            { tier: 'F', name: '怪獸橡膠吊飾', total: 40, image: '🔑' },
         ];
 
-        // 模擬後端：生成 80 張籤並預先分配獎品 (Shuffle)
+        // 模擬後端：生成 80 張籤
         const generateBox = () => {
             let pool = [];
             INITIAL_PRIZES.forEach(p => {
                 for(let i=0; i<p.total; i++) pool.push(p.tier);
             });
-            // 打亂順序
             pool = pool.sort(() => Math.random() - 0.5);
-            
             return Array.from({ length: TOTAL_TICKETS }, (_, i) => ({
                 id: i + 1,
-                status: 'AVAILABLE', // AVAILABLE, SOLD
+                status: 'AVAILABLE', 
                 tier: pool[i]
             }));
         };
 
-        // --- 主應用元件 ---
         function App() {
             const [tickets, setTickets] = useState([]);
-            const [userCoins, setUserCoins] = useState(5000);
+            const [userCoins, setUserCoins] = useState(8800);
             const [isDrawing, setIsDrawing] = useState(false);
-            const [drawResult, setDrawResult] = useState(null); // 存放抽獎結果
+            const [drawResult, setDrawResult] = useState(null);
             const [showResultModal, setShowResultModal] = useState(false);
 
-            // 初始化
+            // 請在這裡設定你的圖片路徑
+            // 如果你是放在本地資料夾，請確保檔名是 logo.png
+            // 如果你有圖片網址，直接貼在引號內，例如 "https://i.imgur.com/xxxx.png"
+            const LOGO_URL = "./logo.png"; 
+
             useEffect(() => {
                 setTickets(generateBox());
             }, []);
 
-            // 計算當前剩餘獎品數量
             const getRemainingPrizes = () => {
                 const counts = {};
                 INITIAL_PRIZES.forEach(p => counts[p.tier] = 0);
@@ -104,7 +117,6 @@
             const totalRemaining = tickets.filter(t => t.status === 'AVAILABLE').length;
             const progressPercent = ((TOTAL_TICKETS - totalRemaining) / TOTAL_TICKETS) * 100;
 
-            // 抽獎邏輯
             const handleDraw = (count) => {
                 if (userCoins < count * PRICE_PER_DRAW) {
                     alert("代幣不足！請先儲值");
@@ -117,25 +129,20 @@
 
                 setIsDrawing(true);
 
-                // 模擬網路延遲與動畫
                 setTimeout(() => {
-                    // 1. 找出可用的籤
                     const availableIndices = tickets
                         .map((t, i) => t.status === 'AVAILABLE' ? i : -1)
                         .filter(i => i !== -1);
 
-                    // 2. 隨機選取 count 張
                     const selectedIndices = [];
                     for (let i = 0; i < count; i++) {
                         const rand = Math.floor(Math.random() * availableIndices.length);
                         selectedIndices.push(availableIndices[rand]);
-                        availableIndices.splice(rand, 1); // 移除已選的，避免重複
+                        availableIndices.splice(rand, 1);
                     }
 
-                    // 3. 更新狀態
                     const newTickets = [...tickets];
                     const results = [];
-
                     selectedIndices.forEach(index => {
                         newTickets[index].status = 'SOLD';
                         results.push(newTickets[index]);
@@ -147,28 +154,51 @@
                     setIsDrawing(false);
                     setShowResultModal(true);
 
-                }, 1500); // 1.5秒動畫時間
+                }, 1500);
             };
 
-            // 取得獎品詳細資訊
             const getPrizeInfo = (tier) => INITIAL_PRIZES.find(p => p.tier === tier);
 
             return (
-                <div className="min-h-screen bg-gray-900 text-gray-100 pb-20">
-                    {/* 導航列 */}
-                    <nav className="bg-gray-800 p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl">🎲</span>
-                            <h1 className="font-bold text-xl tracking-wider">KUJI ONLINE</h1>
+                <div className="min-h-screen bg-[#0f172a] text-gray-100 pb-24">
+                    {/* 導航列 - 品牌區塊 */}
+                    <nav className="bg-[#020617] border-b border-gray-800 p-3 sticky top-0 z-40 shadow-2xl flex justify-between items-center">
+                        <div className="flex items-center gap-4 pl-2">
+                            {/* Logo 圖片區塊 */}
+                            <div className="relative w-14 h-14 group">
+                                {/* 如果找不到圖片，會顯示備用的 Emoji */}
+                                <img 
+                                    src={LOGO_URL}
+                                    onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}}
+                                    alt="Roar Logo"
+                                    className="w-full h-full object-cover rounded-full border-2 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)] z-10 relative bg-blue-900"
+                                />
+                                {/* 備用顯示 (如果圖片載入失敗) */}
+                                <div className="hidden absolute inset-0 w-full h-full rounded-full bg-blue-900 items-center justify-center text-2xl border-2 border-yellow-400">
+                                    🦁
+                                </div>
+                            </div>
+                            
+                            {/* 品牌名稱 */}
+                            <div className="flex flex-col justify-center">
+                                <h1 className="font-brand text-3xl tracking-widest text-white leading-none" style={{ textShadow: '2px 2px 0px #ca8a04' }}>
+                                    ROAR
+                                </h1>
+                                <span className="text-[10px] font-bold text-yellow-500 tracking-[0.2em] uppercase">
+                                    Ichiban Kuji Platform
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 bg-gray-700 px-4 py-1 rounded-full">
-                            <span className="text-yellow-400 text-xl">💰</span>
-                            <span className="font-mono font-bold text-lg">{userCoins} P</span>
+
+                        {/* 錢包區塊 */}
+                        <div className="flex items-center gap-3 bg-gray-900 border border-gray-700 px-3 py-1.5 rounded-lg mr-2">
+                            <span className="text-yellow-400 text-lg">🪙</span>
+                            <span className="font-mono font-bold text-lg">{userCoins}</span>
                             <button 
                                 onClick={() => setUserCoins(prev => prev + 1000)}
-                                className="text-xs bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded"
+                                className="text-xs bg-yellow-600 hover:bg-yellow-500 text-black font-bold px-2 py-1 rounded transition-colors"
                             >
-                                +儲值
+                                +
                             </button>
                         </div>
                     </nav>
@@ -176,68 +206,98 @@
                     <div className="max-w-4xl mx-auto p-4">
                         
                         {/* 商品看板區 */}
-                        <div className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl mb-8 border border-gray-700">
-                            <div className="relative h-48 bg-gradient-to-r from-purple-900 to-blue-900 flex items-center justify-center">
-                                <h2 className="text-4xl font-black text-white drop-shadow-lg italic transform -rotate-2">
-                                    七龍珠 VS Omnibus
+                        <div className="bg-gray-800 rounded-xl overflow-hidden shadow-2xl mb-8 border border-gray-700 group">
+                            <div className="relative h-56 bg-gradient-to-br from-blue-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center overflow-hidden">
+                                {/* 背景裝飾 */}
+                                <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                                
+                                <h2 className="relative z-10 text-4xl md:text-5xl font-black text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] italic transform -rotate-2">
+                                    怪獸大戰爭 <span className="text-yellow-400">ROAR</span> 版
                                 </h2>
-                                <div className="absolute bottom-2 right-2 bg-black/50 px-3 py-1 rounded text-sm">
-                                    一抽 {PRICE_PER_DRAW} P
+                                <div className="relative z-10 mt-4 bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-yellow-500/50 text-yellow-400 font-bold shadow-lg flex items-center gap-2">
+                                    <span className="animate-pulse">●</span> 現正熱賣中 | 一抽 {PRICE_PER_DRAW} 代幣
                                 </div>
                             </div>
                             
-                            <div className="p-4">
-                                <div className="flex justify-between text-sm text-gray-400 mb-2">
-                                    <span>進度 {TOTAL_TICKETS - totalRemaining}/{TOTAL_TICKETS}</span>
-                                    <span>剩餘 {totalRemaining} 張</span>
+                            {/* 進度條 */}
+                            <div className="px-6 py-4 bg-gray-900/50">
+                                <div className="flex justify-between text-sm text-gray-300 mb-2 font-bold">
+                                    <span>剩餘張數: <span className="text-yellow-400 text-lg">{totalRemaining}</span></span>
+                                    <span>總張數: {TOTAL_TICKETS}</span>
                                 </div>
-                                <div className="w-full bg-gray-700 h-4 rounded-full overflow-hidden">
+                                <div className="w-full bg-gray-700 h-3 rounded-full overflow-hidden shadow-inner">
                                     <div 
-                                        className="bg-gradient-to-r from-yellow-400 to-red-500 h-full transition-all duration-500" 
+                                        className="bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-200 h-full transition-all duration-700 ease-out" 
                                         style={{width: `${progressPercent}%`}}
                                     ></div>
                                 </div>
                             </div>
 
-                            {/* 獎品清單與剩餘量 */}
-                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-4 bg-gray-800">
+                            {/* 獎品清單 */}
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 p-4 bg-[#1e293b]">
                                 {INITIAL_PRIZES.map(prize => {
                                     const remaining = remainingCounts[prize.tier];
                                     const isSoldOut = remaining === 0;
+                                    const isTopPrize = ['A', 'B'].includes(prize.tier);
+                                    
                                     return (
-                                        <div key={prize.tier} className={`relative flex flex-col items-center p-2 rounded-lg border ${isSoldOut ? 'border-gray-700 bg-gray-900 opacity-50' : 'border-gray-600 bg-gray-700'}`}>
-                                            <div className={`text-2xl mb-1 ${prize.tier === 'A' ? 'animate-bounce' : ''}`}>{prize.image}</div>
-                                            <div className={`font-bold text-lg ${prize.tier === 'A' ? 'text-yellow-400' : 'text-white'}`}>
-                                                {prize.tier}賞
+                                        <div key={prize.tier} className={`
+                                            relative flex flex-col items-center p-2 rounded-lg border transition-all duration-300
+                                            ${isSoldOut 
+                                                ? 'border-gray-800 bg-gray-900/50 opacity-40 grayscale' 
+                                                : isTopPrize 
+                                                    ? 'border-yellow-500/50 bg-gradient-to-b from-gray-800 to-gray-900 shadow-[0_0_15px_rgba(234,179,8,0.15)] transform hover:-translate-y-1' 
+                                                    : 'border-gray-700 bg-gray-800 hover:bg-gray-750'
+                                            }
+                                        `}>
+                                            <div className="text-3xl mb-2 filter drop-shadow-lg">{prize.image}</div>
+                                            <div className={`font-black text-xl ${isTopPrize ? 'text-yellow-400' : 'text-gray-200'}`}>
+                                                {prize.tier}<span className="text-xs font-normal text-gray-400">賞</span>
                                             </div>
-                                            <div className="text-xs text-center text-gray-300 truncate w-full">{prize.name}</div>
-                                            <div className={`mt-1 text-xs px-2 py-0.5 rounded-full ${isSoldOut ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'}`}>
+                                            <div className="text-[10px] text-center text-gray-400 truncate w-full mb-1">{prize.name}</div>
+                                            
+                                            {/* 剩餘數量標籤 */}
+                                            <div className={`
+                                                text-[10px] font-bold px-2 py-0.5 rounded-full mt-auto
+                                                ${isSoldOut ? 'bg-red-900/80 text-red-200' : 'bg-blue-900/80 text-blue-200'}
+                                            `}>
                                                 剩 {remaining}
                                             </div>
+
+                                            {/* 已售完印章 */}
+                                            {isSoldOut && (
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <span className="text-red-500 font-black border-2 border-red-500 px-1 transform -rotate-12 text-lg bg-black/50 rounded">SOLD</span>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
 
-                        {/* 籤紙牆 (核心區域) */}
-                        <div className="mb-24">
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <span>📊</span> 配率表狀態
+                        {/* 籤紙牆 */}
+                        <div className="mb-12">
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-300">
+                                <span className="text-yellow-500">📊</span> 選擇你的號碼
                             </h3>
-                            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
                                 {tickets.map((ticket) => (
                                     <div 
                                         key={ticket.id}
                                         className={`
-                                            aspect-square flex items-center justify-center text-sm font-bold rounded cursor-default transition-all duration-300
+                                            aspect-square flex items-center justify-center font-bold text-sm rounded relative overflow-hidden transition-all duration-500
                                             ${ticket.status === 'SOLD' 
-                                                ? 'bg-gray-800 text-gray-600 border border-gray-700 inner-shadow' 
-                                                : 'bg-green-600 text-white border border-green-400 shadow-[0_0_10px_rgba(72,187,120,0.5)]'
+                                                ? 'bg-gray-900 text-gray-700 border border-gray-800' 
+                                                : 'bg-slate-700 text-white border border-slate-600 shadow hover:bg-slate-600 hover:border-yellow-500/50 cursor-pointer'
                                             }
                                         `}
                                     >
-                                        {ticket.status === 'SOLD' ? '❌' : ticket.id}
+                                        {ticket.status === 'SOLD' ? (
+                                            <span className="opacity-30">❌</span>
+                                        ) : (
+                                            <span className="font-mono text-blue-200/70">{String(ticket.id).padStart(2, '0')}</span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -245,77 +305,83 @@
                     </div>
 
                     {/* 底部控制列 */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-4 shadow-2xl z-30">
+                    <div className="fixed bottom-0 left-0 right-0 bg-[#020617]/95 backdrop-blur border-t border-gray-800 p-4 pb-6 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                         <div className="max-w-4xl mx-auto flex gap-4 justify-center">
                             <button 
                                 disabled={isDrawing || totalRemaining < 1}
                                 onClick={() => handleDraw(1)}
-                                className="flex-1 bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 disabled:grayscale text-white font-bold py-3 px-6 rounded-lg shadow-lg transform active:scale-95 transition-all flex flex-col items-center justify-center"
+                                className="flex-1 bg-gradient-to-b from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 disabled:opacity-50 border border-slate-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg active:scale-95 transition-all"
                             >
-                                <span className="text-lg">抽 1 次</span>
-                                <span className="text-xs opacity-80">{PRICE_PER_DRAW} P</span>
+                                <div className="text-lg">單抽一發</div>
+                                <div className="text-xs text-gray-400">{PRICE_PER_DRAW} 代幣</div>
                             </button>
 
                             <button 
                                 disabled={isDrawing || totalRemaining < 5}
                                 onClick={() => handleDraw(5)}
-                                className="flex-1 bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 disabled:grayscale text-white font-bold py-3 px-6 rounded-lg shadow-lg transform active:scale-95 transition-all flex flex-col items-center justify-center ring-2 ring-yellow-300 ring-opacity-50"
+                                className="flex-1 bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 disabled:opacity-50 disabled:grayscale text-black font-black py-3 px-6 rounded-lg shadow-[0_0_20px_rgba(234,179,8,0.3)] transform active:scale-95 transition-all ring-2 ring-yellow-400/50"
                             >
-                                <span className="text-lg">五連抽</span>
-                                <span className="text-xs opacity-80">{PRICE_PER_DRAW * 5} P</span>
+                                <div className="text-lg flex items-center justify-center gap-1">
+                                    五連抽 <span className="text-xs bg-black/20 px-1 rounded text-black">🔥</span>
+                                </div>
+                                <div className="text-xs opacity-70 font-bold">{PRICE_PER_DRAW * 5} 代幣</div>
                             </button>
                         </div>
                     </div>
 
                     {/* 開獎動畫/結果 Modal */}
                     {(isDrawing || showResultModal) && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
                             
-                            {/* 正在抽獎中動畫 */}
                             {isDrawing && (
-                                <div className="text-center animate-shake">
-                                    <div className="text-8xl mb-4">📦</div>
-                                    <h2 className="text-2xl font-bold text-yellow-400">抽選中...</h2>
-                                    <p className="text-gray-400">正在撕開籤紙</p>
+                                <div className="text-center animate-shake relative">
+                                    {/* 模擬撕籤效果 */}
+                                    <div className="w-48 h-64 bg-yellow-400 mx-auto rounded shadow-[0_0_30px_rgba(250,204,21,0.6)] flex items-center justify-center relative overflow-hidden border-4 border-white">
+                                        <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#0001_10px,#0001_20px)]"></div>
+                                        <div className="text-6xl font-black text-black opacity-20 transform -rotate-45">ROAR</div>
+                                    </div>
+                                    <h2 className="mt-8 text-3xl font-black text-yellow-400 tracking-widest">OPENING...</h2>
                                 </div>
                             )}
 
-                            {/* 顯示結果 */}
                             {!isDrawing && showResultModal && (
-                                <div className="bg-gray-800 p-8 rounded-2xl max-w-md w-full mx-4 text-center border-2 border-yellow-500 shadow-[0_0_50px_rgba(234,179,8,0.3)] relative">
-                                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black font-bold px-6 py-1 rounded-full shadow-lg">
-                                        恭喜獲得
+                                <div className="bg-gray-900 p-0 rounded-2xl max-w-md w-full overflow-hidden border border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[85vh]">
+                                    <div className="bg-gradient-to-r from-yellow-600 to-yellow-500 p-4 text-center">
+                                        <h3 className="text-2xl font-black text-black italic">CONGRATULATIONS!</h3>
                                     </div>
                                     
-                                    <div className="grid gap-4 my-6 max-h-[60vh] overflow-y-auto">
-                                        {drawResult && drawResult.map((res, idx) => {
-                                            const info = getPrizeInfo(res.tier);
-                                            return (
-                                                <div key={idx} className="flex items-center bg-gray-700 p-3 rounded-lg border border-gray-600">
-                                                    <div className="text-4xl mr-4">{info.image}</div>
-                                                    <div className="text-left">
-                                                        <div className={`font-bold text-xl ${res.tier === 'A' ? 'text-yellow-400' : 'text-white'}`}>
-                                                            {res.tier} 賞
+                                    <div className="p-6 overflow-y-auto flex-1">
+                                        <div className="grid gap-3">
+                                            {drawResult && drawResult.map((res, idx) => {
+                                                const info = getPrizeInfo(res.tier);
+                                                return (
+                                                    <div key={idx} className="flex items-center bg-gray-800 p-3 rounded border border-gray-700 animate-[fadeIn_0.5s_ease-out_forwards]" style={{animationDelay: `${idx * 0.1}s`}}>
+                                                        <div className="w-16 h-16 bg-gray-700 rounded flex items-center justify-center text-3xl mr-4 shrink-0 shadow-inner">
+                                                            {info.image}
                                                         </div>
-                                                        <div className="text-sm text-gray-300">{info.name}</div>
-                                                        <div className="text-xs text-gray-500 mt-1">籤號: {res.id}</div>
+                                                        <div>
+                                                            <div className={`font-black text-2xl leading-none mb-1 ${['A','B'].includes(res.tier) ? 'text-yellow-400' : 'text-white'}`}>
+                                                                {res.tier} <span className="text-sm">賞</span>
+                                                            </div>
+                                                            <div className="text-xs text-gray-400">{info.name}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )
-                                        })}
+                                                )
+                                            })}
+                                        </div>
                                     </div>
 
-                                    <div className="flex flex-col gap-2">
+                                    <div className="p-4 bg-gray-950 border-t border-gray-800 flex gap-3">
                                         <button 
                                             onClick={() => setShowResultModal(false)}
-                                            className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg"
+                                            className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded transition-colors"
                                         >
-                                            收下獎品
+                                            收入盒櫃
                                         </button>
                                         {totalRemaining > 0 && (
                                             <button 
                                                 onClick={() => {setShowResultModal(false); handleDraw(1);}}
-                                                className="w-full text-yellow-400 hover:text-yellow-300 text-sm py-2"
+                                                className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded transition-colors"
                                             >
                                                 再抽一次
                                             </button>
@@ -326,10 +392,10 @@
                         </div>
                     )}
 
-                    {/* Last One 提示 */}
+                    {/* Last One 賞顯示 */}
                     {totalRemaining === 0 && !showResultModal && (
-                        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
-                             <div className="bg-red-600 text-white font-black text-6xl transform -rotate-12 border-4 border-white p-8 shadow-2xl pointer-events-auto">
+                         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 pointer-events-none">
+                             <div className="bg-red-600 text-white font-black text-5xl md:text-7xl transform -rotate-12 border-8 border-white p-8 shadow-[0_0_50px_red] pointer-events-auto animate-bounce">
                                  SOLD OUT
                              </div>
                         </div>
